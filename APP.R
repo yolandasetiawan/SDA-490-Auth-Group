@@ -1435,7 +1435,7 @@ ui <- navbarPage(
                
                # ── Hero ──────────────────────────────────────────────────────
                div(class = "hero",
-                   div(class = "hero-eyebrow", "V-Dem Dataset v16  ·  WVS  ·  CTM Data  ·  1980 – 2025"),
+                   div(class = "hero-eyebrow", "Divya Nair  ·  Kyleigh Harri  ·  Yolanda Setiawan  ·  SDA 490: Capstone Project (Spring 2026)"),
                    div(class = "hero-title",
                        "Rise in Authoritarianism ", tags$em("Around the World"), tags$br(), "(and in Canada?)"
                    ),
