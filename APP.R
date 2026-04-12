@@ -29,21 +29,99 @@ app_dir <- tryCatch(
 # the app file (not in www/) can still be served by Shiny.
 addResourcePath("appimgs", app_dir)
 
+# ── Compression-aware CSV helpers ─────────────────────────────────────────────
+# Each data file can be plain (.csv), gzip-compressed (.csv.gz), or zipped
+# (.csv.zip). resolve_csv_path() finds whichever exists; safe_read_csv() loads
+# it.  read_csv() handles .gz natively; .zip uses unz().  This means you can
+# compress any large CSV before deploying without changing any other code.
+# Supports plain CSV, gzip (.csv.gz), or zip (.csv.zip) — tries each in order.
+resolve_csv_path <- function(base_name, dirs = NULL) {
+  # Build search dirs freshly at call time so getwd() reflects the actual
+  # working directory when the app runs (may differ from app_dir).
+  if (is.null(dirs)) {
+    dirs <- unique(c(".", getwd(), app_dir))
+  }
+  # Candidate filenames in order of preference
+  candidates <- c(
+    paste0(base_name, ".gz"),   # e.g. WVS.csv.gz  — read_csv handles natively
+    paste0(base_name, ".zip"),  # e.g. WVS.csv.zip — needs unz()
+    base_name                   # plain WVS.csv
+  )
+  for (d in dirs) {
+    for (f in candidates) {
+      full <- file.path(d, f)
+      if (file.exists(full)) {
+        message("Found: ", full)
+        return(list(path = full, type = tools::file_ext(f)))
+      }
+    }
+  }
+  message("Not found: ", base_name, " (searched: ", paste(dirs, collapse=", "), ")")
+  return(NULL)
+}
+
+safe_read_csv <- function(base_name, ...) {
+  info <- resolve_csv_path(base_name)
+  if (is.null(info)) return(NULL)
+  if (info$type == "zip") {
+    # For .zip: open the inner file (assumes inner filename == base_name)
+    con <- unz(info$path, base_name)
+    on.exit(close(con))
+    return(read_csv(con, show_col_types = FALSE, ...))
+  }
+  # For .gz and plain .csv: read_csv handles both transparently
+  read_csv(info$path, show_col_types = FALSE, ...)
+}
 
 
-vdem <- read_csv("V-Dem-CD-v16.csv", show_col_types = FALSE)
 
-vdem_all <- vdem |>
-  filter(year >= 1980, year <= 2025) |>
-  select(country_name, year, v2x_polyarchy) |>
-  mutate(v2x_polyarchy = round(v2x_polyarchy, 3))
+# =============================================================================
+# DATA LOADING
+# Tries slim .rds files first (created by prepare_data.R — tiny, fast).
+# Falls back to the raw CSV/SAV files if .rds not found.
+# Run prepare_data.R once on your local machine before deploying.
+# =============================================================================
+
+load_rds_or_csv <- function(rds_name, csv_fallback_fn) {
+  # Search for .rds in working dir and app_dir
+  for (d in unique(c(".", getwd(), app_dir))) {
+    p <- file.path(d, rds_name)
+    if (file.exists(p)) { message("Loading ", p); return(readRDS(p)) }
+  }
+  message(rds_name, " not found — running CSV fallback")
+  csv_fallback_fn()
+}
+
+# ── V-Dem ──────────────────────────────────────────────────────────────────────
+vdem <- load_rds_or_csv("vdem_slim.rds", function() {
+  raw <- safe_read_csv("V-Dem-CD-v16.csv")
+  if (is.null(raw)) return(NULL)
+  raw %>%
+    filter(year >= 1980, year <= 2025) %>%
+    select(any_of(c("country_name","country_text_id","year",
+                    "v2x_polyarchy","v2cacamps","v2xps_party",
+                    "v2mecenefm","v2lgfunds")))
+})
+
+if (is.null(vdem) || !is.data.frame(vdem)) {
+  message("WARNING: V-Dem data not found. Map will be empty.")
+  vdem <- data.frame(country_name=character(), country_text_id=character(),
+                     year=integer(), v2x_polyarchy=numeric(),
+                     v2cacamps=numeric(), v2xps_party=numeric(),
+                     v2mecenefm=numeric(), v2lgfunds=numeric())
+}
+
+vdem_all <- vdem %>%
+  filter(year >= 1980, year <= 2025) %>%
+  select(any_of(c("country_name", "year", "v2x_polyarchy"))) %>%
+  { if ("v2x_polyarchy" %in% names(.))
+    mutate(., v2x_polyarchy = round(v2x_polyarchy, 3))
+    else . }
 
 world <- ne_countries(scale = "medium", returnclass = "sf") |>
   select(name, name_long, iso_a3, geometry)
 
-# Manual name-matching patches
-# Keys are rnaturalearth `name` values; values are exact V-Dem country_name strings
-#Note for me, look into Czech matching (Czechia or Czech Republic)
+# Manual name-matching patches (rnaturalearth name → V-Dem country_name)
 name_map <- c(
   "United States of America" = "United States of America",
   "Russia"                   = "Russia",
@@ -69,7 +147,7 @@ name_map <- c(
 world <- world |>
   mutate(vdem_name = case_when(
     name %in% names(name_map) ~ name_map[name],
-    name_long == "United States" ~ "United States",   # fallback: ne long name → V-Dem
+    name_long == "United States" ~ "United States",
     name_long == "Russia"        ~ "Russia",
     TRUE                         ~ name_long
   ))
@@ -77,164 +155,97 @@ world <- world |>
 # world_base is the geometry-only frame; data is joined reactively per year
 world_base <- world
 
-# ── WVS Data ──────────────────────────────────────────────────────────────────
-wvs_path <- "WVS.csv"
+# ── WVS ────────────────────────────────────────────────────────────────────────
+wvs_iso_map <- c("112"="Belarus","356"="India","348"="Hungary","840"="United States",
+                 "643"="Russia","862"="Venezuela","854"="Burkina Faso","558"="Nicaragua",
+                 "466"="Mali","562"="Niger","788"="Tunisia","792"="Turkey","124"="Canada")
 
-# Also check app_dir in case working directory differs
-if (!file.exists(wvs_path)) {
-  wvs_path <- file.path(app_dir, "WVS.csv")
-}
-
-if (file.exists(wvs_path)) {
-  wvs_data <- read_csv(wvs_path, show_col_types = FALSE)
-}
-
-if (!exists("wvs_data") || !is.data.frame(wvs_data)) {
-  # Synthetic demo data so the app runs without the real file
-  set.seed(42)
-  wvs_countries <- c(
-    "Belarus", "India", "Hungary", "United States", "Russia",
-    "Venezuela", "Burkina Faso", "Nicaragua", "Mali", "Niger",
-    "Tunisia", "Turkey", "Canada"
-  )
-  wvs_data <- expand.grid(
-    country = wvs_countries,
-    year    = c(1994, 1999, 2004, 2009, 2014, 2020)
-  ) %>%
-    mutate(
-      X003        = round(runif(n(), 18, 80)),
-      gdp_per_cap = exp(runif(n(), 7, 11)),
-      E114        = sample(1:4, n(), replace = TRUE),
-      E116        = sample(1:4, n(), replace = TRUE),
-      E115        = sample(1:4, n(), replace = TRUE),
-      E018        = sample(1:4, n(), replace = TRUE),
-      A042        = sample(1:4, n(), replace = TRUE),
-      E225        = sample(1:4, n(), replace = TRUE),
-      E228        = sample(1:4, n(), replace = TRUE),
-      A124_06     = sample(1:4, n(), replace = TRUE),
-      A124_12     = sample(1:4, n(), replace = TRUE),
-      A124_43     = sample(1:4, n(), replace = TRUE),
-      A007        = sample(1:6, n(), replace = TRUE)
-    )
-} else {
-  # Real WVS CSV loaded — normalise column names if needed.
-  # If it uses S003 (numeric country code) and S020 (year), convert them.
-  if ("S003" %in% names(wvs_data) && !"country" %in% names(wvs_data)) {
-    wvs_iso_map <- c(
-      "112" = "Belarus",
-      "356" = "India",
-      "348" = "Hungary",
-      "840" = "United States",
-      "643" = "Russia",
-      "862" = "Venezuela",
-      "854" = "Burkina Faso",
-      "558" = "Nicaragua",
-      "466" = "Mali",
-      "562" = "Niger",
-      "788" = "Tunisia",
-      "792" = "Turkey",
-      "124" = "Canada"
-    )
-    wvs_data <- wvs_data %>%
-      mutate(
-        country = wvs_iso_map[as.character(as.integer(S003))],
-        year    = as.integer(S020)
-      ) %>%
+wvs_data <- load_rds_or_csv("wvs_slim.rds", function() {
+  raw <- safe_read_csv("WVS.csv")
+  if (is.null(raw)) return(NULL)
+  if ("S003" %in% names(raw) && !"country" %in% names(raw)) {
+    raw <- raw %>%
+      mutate(country = wvs_iso_map[as.character(as.integer(S003))],
+             year    = as.integer(S020)) %>%
       filter(!is.na(country))
-  } else if ("country_name" %in% names(wvs_data) && !"country" %in% names(wvs_data)) {
-    wvs_data <- wvs_data %>% rename(country = country_name)
+  } else if ("country_name" %in% names(raw) && !"country" %in% names(raw)) {
+    raw <- raw %>% rename(country = country_name)
   }
-  # Ensure year column is integer
-  if ("year" %in% names(wvs_data)) {
-    wvs_data <- wvs_data %>% mutate(year = as.integer(year))
-  }
+  if ("year" %in% names(raw)) raw <- raw %>% mutate(year = as.integer(year))
+  raw
+})
+
+if (!is.data.frame(wvs_data) || nrow(wvs_data) == 0) {
+  # Synthetic fallback
+  set.seed(42)
+  wvs_countries <- c("Belarus","India","Hungary","United States","Russia",
+                     "Venezuela","Burkina Faso","Nicaragua","Mali","Niger",
+                     "Tunisia","Turkey","Canada")
+  wvs_data <- expand.grid(country=wvs_countries, year=c(1994,1999,2004,2009,2014,2020)) %>%
+    mutate(E114=sample(1:4,n(),T),E116=sample(1:4,n(),T),E115=sample(1:4,n(),T),
+           E018=sample(1:4,n(),T),A042=sample(1:4,n(),T),E225=sample(1:4,n(),T),
+           E228=sample(1:4,n(),T),A124_06=sample(1:4,n(),T),
+           A124_12=sample(1:4,n(),T),A124_43=sample(1:4,n(),T))
+} else {
+  if ("year" %in% names(wvs_data)) wvs_data <- wvs_data %>% mutate(year=as.integer(year))
 }
 
-# ── GINI Data ──────────────────────────────────────────────────────────────────
-gini_path <- "GINI_DATA.csv"
+# ── GINI ────────────────────────────────────────────────────────────────────────
+wb_to_wvs <- c(
+  "United States"="United States","United Kingdom"="United Kingdom",
+  "Russian Federation"="Russia","Korea, Rep."="South Korea",
+  "Venezuela, RB"="Venezuela","Burkina Faso"="Burkina Faso",
+  "Nicaragua"="Nicaragua","Mali"="Mali","Niger"="Niger",
+  "Tunisia"="Tunisia","Turkiye"="Turkey","Turkey"="Turkey",
+  "Canada"="Canada","India"="India","Hungary"="Hungary","Belarus"="Belarus",
+  "Korea, Dem. People\u2019s Rep."="North Korea","Iran, Islamic Rep."="Iran",
+  "Egypt, Arab Rep."="Egypt","Syrian Arab Republic"="Syria","Yemen, Rep."="Yemen",
+  "Congo, Dem. Rep."="Democratic Republic of the Congo",
+  "Congo, Rep."="Republic of the Congo","Gambia, The"="Gambia",
+  "Lao PDR"="Laos","West Bank and Gaza"="Palestine",
+  "Micronesia, Fed. Sts."="Micronesia","Slovak Republic"="Slovakia",
+  "Czechia"="Czech Republic","Kyrgyz Republic"="Kyrgyzstan",
+  "Cote d\u2019Ivoire"="Ivory Coast","Cabo Verde"="Cape Verde",
+  "Eswatini"="Swaziland","North Macedonia"="North Macedonia",
+  "Bosnia and Herzegovina"="Bosnia and Herzegovina"
+)
 
-if (file.exists(gini_path)) {
-  gini_raw <- read_csv(
-    gini_path,
-    show_col_types  = FALSE,
-    skip_empty_rows = TRUE
-  )
-  
-  # ── Detect format: wide (World Bank) vs. long ─────────────────────────────
-  # World Bank exports: "Country Name", "Country Code", "Indicator Name",
-  # "Indicator Code", then year columns (e.g. 1960, 1961, ..., 2025).
-  is_wide <- any(grepl("country.name", names(gini_raw), ignore.case = TRUE)) ||
-    any(grepl("^\\d{4}$", names(gini_raw)))
-  
-  if (is_wide) {
-    country_col <- names(gini_raw)[1]
-    year_cols   <- names(gini_raw)[grepl("^\\d{4}$", names(gini_raw))]
-    
-    gini_data <- gini_raw %>%
-      select(country = all_of(country_col), all_of(year_cols)) %>%
-      pivot_longer(
-        cols      = all_of(year_cols),
-        names_to  = "year",
-        values_to = "gini"
-      ) %>%
-      mutate(
-        year = as.integer(year),
-        gini = suppressWarnings(as.numeric(gini))
-      ) %>%
-      filter(!is.na(gini))
+gini_data <- load_rds_or_csv("gini_slim.rds", function() {
+  gini_info <- resolve_csv_path("GINI_DATA.csv")
+  if (is.null(gini_info)) return(NULL)
+  gini_raw <- if (gini_info$type == "zip") {
+    read_csv(unz(gini_info$path,"GINI_DATA.csv"), show_col_types=FALSE, skip_empty_rows=TRUE)
+  } else {
+    read_csv(gini_info$path, show_col_types=FALSE, skip_empty_rows=TRUE)
+  }
+  year_cols <- names(gini_raw)[grepl("^\\d{4}$", names(gini_raw))]
+  if (length(year_cols) > 0) {
+    gini_raw %>%
+      select(country=1, all_of(year_cols)) %>%
+      pivot_longer(all_of(year_cols), names_to="year", values_to="gini") %>%
+      mutate(year=as.integer(year), gini=suppressWarnings(as.numeric(gini))) %>%
+      filter(!is.na(gini)) %>%
+      mutate(country=dplyr::recode(country, !!!wb_to_wvs))
   } else {
     names(gini_raw) <- tolower(names(gini_raw))
-    gini_col  <- intersect(c("gini", "gini_index", "gini_coefficient"), names(gini_raw))[1]
-    gini_data <- gini_raw %>%
-      rename(gini = all_of(gini_col)) %>%
+    gini_col <- intersect(c("gini","gini_index","gini_coefficient"), names(gini_raw))[1]
+    gini_raw %>%
+      rename(gini=all_of(gini_col)) %>%
       select(country, year, gini) %>%
-      mutate(year = as.integer(year), gini = as.numeric(gini))
+      mutate(year=as.integer(year), gini=as.numeric(gini),
+             country=dplyr::recode(country, !!!wb_to_wvs))
   }
-  
-  # ── Harmonise World Bank country names → WVS country names ─────────────────
-  wb_to_wvs <- c(
-    "United States"                        = "United States",
-    "United Kingdom"                       = "United Kingdom",
-    "Russian Federation"                   = "Russia",
-    "Korea, Rep."                          = "South Korea",
-    "Korea, Dem. People\u2019s Rep."      = "North Korea",
-    "Iran, Islamic Rep."                   = "Iran",
-    "Egypt, Arab Rep."                     = "Egypt",
-    "Venezuela, RB"                        = "Venezuela",
-    "Syrian Arab Republic"                 = "Syria",
-    "Yemen, Rep."                          = "Yemen",
-    "Congo, Dem. Rep."                     = "Democratic Republic of the Congo",
-    "Congo, Rep."                          = "Republic of the Congo",
-    "Gambia, The"                          = "Gambia",
-    "Lao PDR"                              = "Laos",
-    "West Bank and Gaza"                   = "Palestine",
-    "Micronesia, Fed. Sts."                = "Micronesia",
-    "Slovak Republic"                      = "Slovakia",
-    "Czechia"                              = "Czech Republic",
-    "Kyrgyz Republic"                      = "Kyrgyzstan",
-    "Turkiye"                              = "Turkey",
-    "Cote d\u2019Ivoire"                  = "Ivory Coast",
-    "Cabo Verde"                           = "Cape Verde",
-    "Eswatini"                             = "Swaziland",
-    "North Macedonia"                      = "North Macedonia",
-    "Bosnia and Herzegovina"               = "Bosnia and Herzegovina"
-  )
-  gini_data <- gini_data %>%
-    mutate(country = dplyr::recode(country, !!!wb_to_wvs))
-} else {
-  # Synthetic Gini demo data keyed to the same countries & years as WVS
+})
+
+if (is.null(gini_data) || !is.data.frame(gini_data)) {
   set.seed(99)
-  gini_countries <- c(
-    "Belarus", "India", "Hungary", "United States", "Russia",
-    "Venezuela", "Burkina Faso", "Nicaragua", "Mali", "Niger",
-    "Tunisia", "Turkey", "Canada"
-  )
   gini_data <- expand.grid(
-    country = gini_countries,
-    year    = c(1994, 1999, 2004, 2009, 2014, 2020)
-  ) %>%
-    mutate(gini = round(runif(n(), 25, 65), 1))
+    country=c("Belarus","India","Hungary","United States","Russia",
+              "Venezuela","Burkina Faso","Nicaragua","Mali","Niger","Tunisia","Turkey","Canada"),
+    year=c(1994,1999,2004,2009,2014,2020)) %>%
+    mutate(gini=round(runif(n(),25,65),1))
 }
+
 
 auth_vars <- c("E114","E116","E115","E018","A042",
                "E225","E228","A124_06","A124_12","A124_43")
@@ -267,7 +278,14 @@ wvs_y_choices <- c(
 #makes changes according to the logistic regression formula 
 
 # ── Election Data (Canada Votes Map) ─────────────────────────────────────────
-election_path <- "table_tableau08.csv"
+election_raw_loaded <- load_rds_or_csv("election_slim.rds", function() {
+  ei <- resolve_csv_path("table_tableau08.csv")
+  if (is.null(ei)) return(NULL)
+  if (ei$type == "zip")
+    read_csv(unz(ei$path, "table_tableau08.csv"), locale=locale(encoding="UTF-8"), show_col_types=FALSE)
+  else
+    read_csv(ei$path, locale=locale(encoding="UTF-8"), show_col_types=FALSE)
+})
 
 party_short <- c(
   "Animal Protection Party of Canada/Le Parti pour la Protection des Animaux du Canada" = "Animal Protection",
@@ -327,12 +345,8 @@ col_to_prov <- c(
   "Nun. Valid Votes/Votes valides Nt"          = "Nunavut"
 )
 
-if (file.exists(election_path)) {
-  election_raw <- read_csv(
-    election_path,
-    locale         = locale(encoding = "UTF-8"),
-    show_col_types = FALSE
-  )
+if (!is.null(election_raw_loaded) && is.data.frame(election_raw_loaded)) {
+  election_raw <- election_raw_loaded
   
   votes_long <- election_raw |>
     dplyr::rename(party_full = 1) |>
@@ -405,15 +419,34 @@ make_election_tooltip <- function(prov_name) {
 }
 
 # ── CTM Data (Canada Authoritarian Map) ────────────────────────────────────────
-ctm_raw <- read_sav("CTM_DATA.sav")
+ctm_auth_vars <- c("HD3", "V3", "ATT10", "HD4", "V2")
+
+ctm_raw <- load_rds_or_csv("ctm_slim.rds", function() {
+  tryCatch({
+    path1 <- "CTM_DATA.sav"
+    path2 <- file.path(app_dir, "CTM_DATA.sav")
+    if (file.exists(path1)) read_sav(path1)
+    else if (file.exists(path2)) read_sav(path2)
+    else NULL
+  }, error = function(e) NULL)
+})
+
+if (is.null(ctm_raw) || !is.data.frame(ctm_raw)) {
+  message("WARNING: CTM_DATA.sav not found. Canada map tab will use empty data.")
+  ctm_raw <- data.frame()
+}
 
 ctm_auth_vars <- c("HD3", "V3", "ATT10", "HD4", "V2")
 
-ctm <- ctm_raw %>%
-  mutate(across(all_of(ctm_auth_vars), as.numeric)) %>%
-  rowwise() %>%
-  mutate(auth_index = mean(c_across(all_of(ctm_auth_vars)), na.rm = TRUE)) %>%
-  ungroup()
+ctm <- if (nrow(ctm_raw) > 0 && all(ctm_auth_vars %in% names(ctm_raw))) {
+  ctm_raw %>%
+    mutate(across(all_of(ctm_auth_vars), as.numeric)) %>%
+    rowwise() %>%
+    mutate(auth_index = mean(c_across(all_of(ctm_auth_vars)), na.rm = TRUE)) %>%
+    ungroup()
+} else {
+  data.frame(auth_index = numeric())
+}
 
 region_to_province <- c(
   "BC_REG"   = "British Columbia",
@@ -436,20 +469,27 @@ region_to_province <- c(
 
 region_cols <- intersect(names(region_to_province), names(ctm))
 
-ctm_id <- ctm %>%
-  mutate(.row_id = row_number()) %>%
-  mutate(across(all_of(region_cols), haven::zap_labels))
-
-ctm_long <- ctm_id %>%
-  select(all_of(c(".row_id", "auth_index", region_cols))) %>%
-  tidyr::pivot_longer(
-    cols      = all_of(region_cols),
-    names_to  = "reg_col",
-    values_to = "reg_val"
-  ) %>%
-  filter(!is.na(reg_val)) %>%
-  mutate(province = region_to_province[reg_col]) %>%
-  filter(!is.na(province), !is.na(auth_index))
+if (nrow(ctm) > 0 && length(region_cols) > 0) {
+  ctm_id <- ctm %>%
+    mutate(.row_id = row_number()) %>%
+    mutate(across(all_of(region_cols), haven::zap_labels))
+  
+  ctm_long <- ctm_id %>%
+    select(all_of(c(".row_id", "auth_index", region_cols))) %>%
+    tidyr::pivot_longer(
+      cols      = all_of(region_cols),
+      names_to  = "reg_col",
+      values_to = "reg_val"
+    ) %>%
+    filter(!is.na(reg_val)) %>%
+    mutate(province = region_to_province[reg_col]) %>%
+    filter(!is.na(province), !is.na(auth_index))
+} else {
+  ctm_id   <- data.frame(.row_id = integer(), auth_index = numeric())
+  ctm_long <- data.frame(.row_id = integer(), auth_index = numeric(),
+                         reg_col = character(), reg_val = numeric(),
+                         province = character())
+}
 
 prov_auth <- ctm_long %>%
   distinct(.row_id, province, .keep_all = TRUE) %>%
@@ -609,36 +649,28 @@ wdi_iso2_map <- c(
   "Canada"        = "CA"
 )
 
-wb_gni_scatter <- tryCatch({
-  raw <- WDI(
-    indicator = "NY.GNP.PCAP.PP.CD",
-    country   = unname(wdi_iso2_map),
-    start     = 1980,
-    end       = 2025
-  )
-  iso2_to_name <- setNames(names(wdi_iso2_map), wdi_iso2_map)
-  raw %>%
-    filter(!is.na(NY.GNP.PCAP.PP.CD)) %>%
-    transmute(
-      country       = iso2_to_name[iso2c],
-      year          = as.integer(year),
-      logged_wealth = log(NY.GNP.PCAP.PP.CD)
-    ) %>%
-    filter(!is.na(country))
-}, error = function(e) {
-  message("WDI fetch failed, falling back to wb_data_clean: ", conditionMessage(e))
-  # fallback to wb_data_clean if WDI call fails (offline etc.)
-  if (exists("wb_data_clean") && is.data.frame(wb_data_clean) && "gni_pc" %in% names(wb_data_clean)) {
-    iso_to_name <- setNames(names(wdi_iso2_map), wdi_iso2_map)
-    wb_data_clean %>%
-      distinct(iso3c, year, .keep_all = TRUE) %>%
-      filter(!is.na(gni_pc)) %>%
-      mutate(country = countrycode(iso3c, "iso3c", "country.name")) %>%
-      filter(!is.na(country)) %>%
-      transmute(country, year = as.integer(year), logged_wealth = log(gni_pc))
-  } else {
+wb_gni_scatter <- load_rds_or_csv("wdi_slim.rds", function() {
+  tryCatch({
+    message("Fetching GNI data from World Bank API (once only)...")
+    raw <- WDI(
+      indicator = "NY.GNP.PCAP.PP.CD",
+      country   = unname(wdi_iso2_map),
+      start     = 1980,
+      end       = 2025
+    )
+    iso2_to_name <- setNames(names(wdi_iso2_map), wdi_iso2_map)
+    raw %>%
+      filter(!is.na(NY.GNP.PCAP.PP.CD)) %>%
+      transmute(
+        country       = iso2_to_name[iso2c],
+        year          = as.integer(year),
+        logged_wealth = log(NY.GNP.PCAP.PP.CD)
+      ) %>%
+      filter(!is.na(country))
+  }, error = function(e) {
+    message("WDI fetch failed (no internet?): ", conditionMessage(e))
     data.frame(country = character(), year = integer(), logged_wealth = numeric())
-  }
+  })
 })
 
 # Merge V-Dem predictors + auth_index + Gini + logged_wealth
@@ -1403,7 +1435,7 @@ ui <- navbarPage(
                
                # ── Hero ──────────────────────────────────────────────────────
                div(class = "hero",
-                   div(class = "hero-eyebrow", "Divya Nair  ·  Kyleigh Harris  ·  Yolanda Setiawan  ·  SDA 490: Capstone Project (Spring 2026)"),
+                   div(class = "hero-eyebrow", "V-Dem Dataset v16  ·  WVS  ·  CTM Data  ·  1980 – 2025"),
                    div(class = "hero-title",
                        "Rise in Authoritarianism ", tags$em("Around the World"), tags$br(), "(and in Canada?)"
                    ),
