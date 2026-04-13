@@ -815,7 +815,7 @@ pal <- colorNumeric(
 # ── UI ───────────────────────────────────────────────────────────────────────
 ui <- navbarPage(
   title = div(
-    style = "font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; letter-spacing:-0.02em; color:#0f172a;",
+    style = "font-family:'Syne',sans-serif; font-weight:800; font-size:1.02rem; letter-spacing:-0.02em; color:#0f172a;",
     "DEMOCRACY ", tags$span("INDEX", style = "color:#3b82f6;"), " MAP"
   ),
   id = "nav",
@@ -830,6 +830,8 @@ ui <- navbarPage(
     tags$style(HTML("
       /* ── Global ── */
       * { box-sizing: border-box; }
+
+      html { font-size: 16px; }
 
       body {
         background: #ffffff;
@@ -847,7 +849,7 @@ ui <- navbarPage(
       .navbar-brand { padding: 10px 16px; }
       .navbar-nav > li > a {
         font-family: 'DM Mono', monospace !important;
-        font-size: 0.90rem !important;
+        font-size: 1.02rem !important;
         letter-spacing: 0.14em !important;
         text-transform: uppercase !important;
         color: #6b7280 !important;
@@ -893,7 +895,7 @@ ui <- navbarPage(
         pointer-events: none;
       }
       .hero-eyebrow {
-        font-size: 0.82rem;
+        font-size: 1.05rem;
         letter-spacing: 0.18em;
         text-transform: uppercase;
         color: #3b82f6;
@@ -925,7 +927,7 @@ ui <- navbarPage(
         background: #3b82f6;
         color: #ffffff;
         font-family: 'DM Mono', monospace;
-        font-size: 0.90rem;
+        font-size: 1.02rem;
         letter-spacing: 0.10em;
         text-transform: uppercase;
         padding: 12px 28px;
@@ -950,7 +952,7 @@ ui <- navbarPage(
         padding: 40px 36px;
       }
       .info-card-label {
-        font-size: 0.78rem;
+        font-size: 0.85rem;
         letter-spacing: 0.15em;
         text-transform: uppercase;
         color: #3b82f6;
@@ -959,13 +961,13 @@ ui <- navbarPage(
       .info-card-title {
         font-family: 'Syne', sans-serif;
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1.02rem;
         color: #0f172a;
         margin-bottom: 14px;
         line-height: 1.3;
       }
       .info-card-body {
-        font-size: 1.0rem;
+        font-size: 1.05rem;
         line-height: 1.9;
         color: #6b7280;
       }
@@ -979,7 +981,7 @@ ui <- navbarPage(
         border-bottom: 1px solid #d0dae8;
       }
       .terms-strip-label {
-        font-size: 0.82rem;
+        font-size: 1.05rem;
         letter-spacing: 0.15em;
         text-transform: uppercase;
         color: #9ca3af;
@@ -995,7 +997,7 @@ ui <- navbarPage(
         border: 1px solid #b8c8de;
         border-radius: 20px;
         padding: 6px 16px;
-        font-size: 0.90rem;
+        font-size: 1.02rem;
         color: #6b7280;
       }
       .term-chip strong { color: #3b82f6; font-weight: 400; }
@@ -1009,8 +1011,8 @@ ui <- navbarPage(
         flex-wrap: wrap;
         gap: 12px;
       }
-      .page-footer-left { font-size: 0.82rem; color: #9ca3af; letter-spacing: 0.04em; line-height: 1.7; }
-      .page-footer-right { font-size: 0.82rem; color: #9ca3af; letter-spacing: 0.04em; }
+      .page-footer-left { font-size: 1.05rem; color: #9ca3af; letter-spacing: 0.04em; line-height: 1.7; }
+      .page-footer-right { font-size: 1.05rem; color: #9ca3af; letter-spacing: 0.04em; }
 
       /* ══════════════════════════════════════════════
          MAP PAGE  (existing styles preserved)
@@ -1043,14 +1045,14 @@ ui <- navbarPage(
         letter-spacing: -0.02em;
       }
       .map-page-sub {
-        font-size: 0.82rem;
+        font-size: 1.05rem;
         color: #6b7280;
         letter-spacing: 0.10em;
         text-transform: uppercase;
         margin-top: 2px;
       }
       .panel-label {
-        font-size: 0.84rem;
+        font-size: 1.05rem;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: #6b7280;
@@ -1065,7 +1067,7 @@ ui <- navbarPage(
       .legend-labels {
         display: flex;
         justify-content: space-between;
-        font-size: 0.82rem;
+        font-size: 1.05rem;
         color: #6b7280;
       }
       .stat-box {
@@ -1082,7 +1084,7 @@ ui <- navbarPage(
         line-height: 1;
       }
       .stat-desc {
-        font-size: 0.82rem;
+        font-size: 1.05rem;
         color: #6b7280;
         margin-top: 4px;
         letter-spacing: 0.05em;
@@ -1093,7 +1095,7 @@ ui <- navbarPage(
         align-items: center;
         gap: 10px;
         margin-bottom: 7px;
-        font-size: 0.88rem;
+        font-size: 0.95rem;
         color: #374151;
       }
       .tier-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
@@ -1113,8 +1115,8 @@ ui <- navbarPage(
       }
       .info-country { font-family: 'Syne',sans-serif; font-weight:700; font-size:1rem; color:#0f172a; margin-bottom:4px; }
       .info-score   { font-size:1.5rem; font-weight:700; font-family:'Syne',sans-serif; }
-      .info-tier-label { font-size:0.80rem; text-transform:uppercase; letter-spacing:0.1em; margin-top:3px; color:#6b7280; }
-      .source-note { font-size:1.0rem; color:#9ca3af; letter-spacing:0.05em; line-height:1.6; }
+      .info-tier-label { font-size:1.05rem; text-transform:uppercase; letter-spacing:0.1em; margin-top:3px; color:#6b7280; }
+      .source-note { font-size:1.05rem; color:#9ca3af; letter-spacing:0.05em; line-height:1.6; }
       .rank-table { width:100%; border-collapse:collapse; }
       .rank-table td { padding:4px 0; font-size:1.00rem; color:#6b7280; border-bottom:1px solid #d0dae8; }
       .rank-table td:last-child { text-align:right; color:#3b82f6; }
@@ -1149,12 +1151,12 @@ ui <- navbarPage(
       .wvs-plot-title {
         font-family: 'Syne', sans-serif;
         font-weight: 700;
-        font-size: 1.15rem;
+        font-size: 1.05rem;
         color: #0f172a;
         margin: 0;
       }
       .wvs-plot-subtitle {
-        font-size: 0.90rem;
+        font-size: 1.02rem;
         color: #6b7280;
         margin: 2px 0 0;
         letter-spacing: 0.04em;
@@ -1169,7 +1171,7 @@ ui <- navbarPage(
         flex: 1;
       }
       .wvs-ctrl-label {
-        font-size: 0.84rem;
+        font-size: 1.05rem;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: #6b7280;
@@ -1183,7 +1185,7 @@ ui <- navbarPage(
         color: #f7f9fc;
         font-family: 'DM Mono', monospace;
         font-weight: 500;
-        font-size: 0.88rem;
+        font-size: 0.95rem;
         letter-spacing: 0.05em;
         text-transform: uppercase;
         padding: 8px 14px;
@@ -1197,7 +1199,7 @@ ui <- navbarPage(
         border: none;
         color: #374151;
         font-family: 'DM Mono', monospace;
-        font-size: 0.88rem;
+        font-size: 0.95rem;
         letter-spacing: 0.05em;
         text-transform: uppercase;
         padding: 8px 14px;
@@ -1217,14 +1219,14 @@ ui <- navbarPage(
       }
       .wvs-stat-pill .val {
         font-family: 'Syne', sans-serif;
-        font-size: 1.25rem;
+        font-size: 1.02rem;
         font-weight: 700;
         color: #3b82f6;
         display: block;
         line-height: 1;
       }
       .wvs-stat-pill .lbl {
-        font-size: 0.82rem;
+        font-size: 1.05rem;
         color: #6b7280;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -1232,7 +1234,7 @@ ui <- navbarPage(
         font-family: 'DM Mono', monospace;
       }
       .wvs-index-note {
-        font-size: 0.68rem;
+        font-size: 0.85rem;
         color: #9ca3af;
         line-height: 1.55;
         padding: 10px 12px;
@@ -1251,7 +1253,7 @@ ui <- navbarPage(
       .wvs-sidebar .selectize-control .selectize-input {
         background: #ffffff !important; border: 1px solid #c8cad4 !important;
         color: #1a1a2e !important; border-radius: 6px !important;
-        font-size: 0.82rem !important; box-shadow: none !important; padding: 7px 10px !important;
+        font-size: 1.0rem !important; box-shadow: none !important; padding: 7px 10px !important;
       }
       .wvs-sidebar .selectize-control .selectize-input input {
         color: #1a1a2e !important;
@@ -1269,7 +1271,7 @@ ui <- navbarPage(
       .wvs-sidebar .selectize-input .item {
         background: #dbeafe !important; border: 1px solid #3b82f6 !important;
         color: #1e40af !important; border-radius: 4px !important;
-        padding: 1px 6px !important; font-size: 0.78rem !important;
+        padding: 1px 6px !important; font-size: 0.85rem !important;
       }
       .wvs-sidebar .selectize-input .item.active {
         background: #3b82f6 !important; color: #ffffff !important;
@@ -1297,7 +1299,7 @@ ui <- navbarPage(
       .ctm-map-wrap { flex: 1; position: relative; overflow: hidden; }
       #canada_map { width: 100%; height: 100%; }
       .ctm-section-title {
-        font-size: 0.82rem; letter-spacing: 0.12em;
+        font-size: 1.05rem; letter-spacing: 0.12em;
         text-transform: uppercase; color: #9ca3af;
         margin-bottom: 4px; margin-top: 6px;
       }
@@ -1309,24 +1311,24 @@ ui <- navbarPage(
       }
       .ctm-grad-labels {
         display: flex; justify-content: space-between;
-        font-size: 0.82rem; color: #6b7280;
+        font-size: 1.05rem; color: #6b7280;
       }
       .ctm-divider { border: none; border-top: 1px solid #d0dae8; margin: 4px 0; }
       .ctm-hint {
-        font-size: 0.62rem; color: #6b7280; line-height: 1.6;
+        font-size: 0.85rem; color: #6b7280; line-height: 1.6;
         background: #eef2fa; border: 1px solid #b8c8de;
         border-radius: 8px; padding: 9px 11px;
       }
       .ctm-prov-row {
         display: flex; justify-content: space-between; align-items: center;
-        font-size: 0.64rem; color: #6b7280;
+        font-size: 0.85rem; color: #6b7280;
         padding: 3px 0; border-bottom: 1px solid #eef2fa;
       }
       .ctm-prov-score {
-        font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.90rem;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.02rem;
       }
       .ctm-note {
-        font-size: 0.80rem; color: #6b7280;
+        font-size: 1.05rem; color: #6b7280;
         line-height: 1.65; margin-top: auto;
         padding-top: 12px; border-top: 1px solid #d0dae8;
       }
@@ -1337,7 +1339,7 @@ ui <- navbarPage(
       }
       .ctm-toggle-btn {
         flex: 1; padding: 7px 4px;
-        font-family: 'DM Mono', monospace; font-size: 0.84rem;
+        font-family: 'DM Mono', monospace; font-size: 1.05rem;
         letter-spacing: 0.08em; text-transform: uppercase;
         border: 1px solid #d0dae8; border-radius: 5px;
         background: #eef2fa; color: #6b7280; cursor: pointer;
@@ -1353,7 +1355,7 @@ ui <- navbarPage(
       /* Party legend swatches */
       .votes-leg-item {
         display: flex; align-items: center; gap: 8px;
-        font-size: 0.86rem; color: #374151; padding: 3px 0;
+        font-size: 1.06rem; color: #374151; padding: 3px 0;
       }
       .votes-leg-swatch {
         width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
@@ -1376,7 +1378,7 @@ ui <- navbarPage(
         overflow-y: auto; background: #f7f9fc;
       }
       .reg-ctrl-label {
-        font-size: 0.88rem; letter-spacing: 0.12em; text-transform: uppercase;
+        font-size: 0.95rem; letter-spacing: 0.12em; text-transform: uppercase;
         color: #6b7280; margin-bottom: 8px; font-family: 'DM Mono', monospace;
       }
       .reg-section-title {
@@ -1387,9 +1389,9 @@ ui <- navbarPage(
       .reg-formula-box {
         background: #eef2fa; border: 1px solid #b8c8de; border-radius: 10px;
         padding: 16px 18px; font-family: 'DM Mono', monospace;
-        font-size: 0.95rem; color: #374151; line-height: 2.1;
+        font-size: 1.05rem; color: #374151; line-height: 2.1;
       }
-      .eq-main  { color: #0f172a; font-size: 1.0rem; font-weight: 500; }
+      .eq-main  { color: #0f172a; font-size: 1.05rem; font-weight: 500; }
       .eq-active { color: #3b82f6; font-weight: 700; }
       .eq-muted  { color: #9ca3af; text-decoration: line-through; }
       .reg-stat-grid {
@@ -1399,15 +1401,15 @@ ui <- navbarPage(
         background: #eef2fa; border: 1px solid #b8c8de; border-radius: 10px; padding: 14px 16px;
       }
       .reg-stat-card .val {
-        font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700;
+        font-family: 'Syne', sans-serif; font-size: 1.02rem; font-weight: 700;
         color: #3b82f6; display: block; line-height: 1;
       }
       .reg-stat-card .lbl {
-        font-size: 0.88rem; color: #6b7280; text-transform: uppercase;
+        font-size: 0.95rem; color: #6b7280; text-transform: uppercase;
         letter-spacing: 0.08em; margin-top: 5px; font-family: 'DM Mono', monospace;
       }
       .reg-hint {
-        font-size: 0.95rem; color: #374151; line-height: 1.75; padding: 12px 14px;
+        font-size: 1.05rem; color: #374151; line-height: 1.75; padding: 12px 14px;
         background: #eef2fa; border-left: 3px solid #3b82f6;
         border-radius: 0 6px 6px 0; font-family: 'DM Mono', monospace;
       }
@@ -1417,9 +1419,9 @@ ui <- navbarPage(
       .reg-divider { border: none; border-top: 1px solid #d0dae8; margin: 0; }
       /* Override Shiny's default white table background */
       #reg_coef_table table { width:100%; border-collapse:collapse;
-        font-family:'DM Mono',monospace; font-size:0.93rem; background:#ffffff !important; }
+        font-family:'DM Mono',monospace; font-size:1.02rem; background:#ffffff !important; }
       #reg_coef_table th { color:#9ca3af !important; background:#ffffff !important;
-        font-size:0.96rem !important; letter-spacing:0.14em !important;
+        font-size:1.0rem !important; letter-spacing:0.14em !important;
         text-transform:uppercase !important; padding:6px 12px; border-bottom:1px solid #c4d0e4; }
       #reg_coef_table td { color:#374151 !important; padding:10px 12px;
         border-bottom:1px solid #d0dae8; background:transparent !important; }
@@ -1498,7 +1500,7 @@ ui <- navbarPage(
                    div(class = "info-card",
                        div(class = "info-card-label", "Definition"),
                        div(class = "info-card-title",
-                           HTML("authoritarian <span style='color:#6b7280;font-size:0.85rem;font-weight:400;'>(adj.)</span>")
+                           HTML("authoritarian <span style='color:#6b7280;font-size:1.05rem;font-weight:400;'>(adj.)</span>")
                        ),
                        div(class = "info-card-body",
                            tags$p("\"favoring imposed order over freedom,\" 1862, from authority + -an. Compare authoritative,
@@ -1506,7 +1508,7 @@ ui <- navbarPage(
                                    of \"authoritative\" (by 1857)."),
                            tags$p("The noun in the sense of \"one advocating or practicing the principle of authority over
                                    individual freedom\" is attested by 1859."),
-                           tags$p(style="font-size:1.02rem;color:#9ca3af;",
+                           tags$p(style="font-size:1.05rem;color:#9ca3af;",
                                   "Source: ",
                                   tags$a(href="https://www.etymonline.com/word/authoritarian",
                                          target="_blank",
@@ -1599,7 +1601,7 @@ ui <- navbarPage(
                    ),
                    
                    div(
-                     style = "background:#eef2fa; border:1px solid #b8c8de; border-radius:8px; padding:12px 14px; font-size:1.02rem; color:#6b7280; line-height:1.7;",
+                     style = "background:#eef2fa; border:1px solid #b8c8de; border-radius:8px; padding:12px 14px; font-size:1.05rem; color:#6b7280; line-height:1.7;",
                      "This map visualises the Electoral Democracy Index (v2x_polyarchy) from the Varieties of Democracy
                      (V-Dem) dataset, tracking democratic quality across 180+ countries from 1980 to 2025. It shows
                      the categories at which countries are classified: liberal democracy, electoral democracy, hybrid
@@ -1637,7 +1639,7 @@ ui <- navbarPage(
                      div(class = "tier-row", div(class = "tier-dot", style = "background:#f1c40f"), "Hybrid Regime (0.30–0.49)"),
                      div(class = "tier-row", div(class = "tier-dot", style = "background:#e67e22"), "Competitive Authoritarianism (0.15–0.29)"),
                      div(class = "tier-dot", style = "background:#c0392b"),
-                     span(style = "font-size:1.02rem; color:#6b7280", "Closed Autocracy (< 0.15)")
+                     span(style = "font-size:1.05rem; color:#6b7280", "Closed Autocracy (< 0.15)")
                    ),
                    
                    fluidRow(
@@ -1705,11 +1707,11 @@ ui <- navbarPage(
                    div(
                      style = "display:flex; gap:8px;",
                      actionButton("sel_all",  "All",    class = "btn-gold",
-                                  style = "padding:8px 12px; font-size:0.88rem; flex:1;"),
+                                  style = "padding:8px 12px; font-size:0.95rem; flex:1;"),
                      actionButton("sel_none", "None",   class = "btn-dark",
-                                  style = "padding:8px 12px; font-size:0.88rem; flex:1;"),
+                                  style = "padding:8px 12px; font-size:0.95rem; flex:1;"),
                      actionButton("sel_rand", "Sample", class = "btn-dark",
-                                  style = "padding:8px 12px; font-size:0.88rem; flex:1;")
+                                  style = "padding:8px 12px; font-size:0.95rem; flex:1;")
                    ),
                    
                    hr(class = "wvs-divider"),
@@ -1797,7 +1799,7 @@ ui <- navbarPage(
                    div(
                      div(class = "reg-ctrl-label", "Outcome"),
                      tags$div(
-                       style = "font-size:1.0rem; color:#374151; font-family:'DM Mono',monospace;
+                       style = "font-size:1.05rem; color:#374151; font-family:'DM Mono',monospace;
                          background:#eef2fa; border:1px solid #d0dae8; border-radius:6px; padding:10px 12px;",
                        tags$b(style="color:#1d4ed8;", "v2x_polyarchy"),
                        " — V-Dem Electoral Democracy Index (0–1). Higher = more democratic. All predictors standardized."
@@ -1904,7 +1906,7 @@ ui <- navbarPage(
              div(
                style = "background: linear-gradient(160deg, #ffffff 0%, #eef2fa 50%, #f0f7ee 100%);
                         padding: 60px 10% 48px; border-bottom: 1px solid #d0dae8; position: relative;",
-               div(style = "font-size:0.96rem; letter-spacing:0.22em; text-transform:uppercase;
+               div(style = "font-size:1.05rem; letter-spacing:0.22em; text-transform:uppercase;
                             color:#3b82f6; margin-bottom:16px;", "Summary of Findings"),
                div(
                  style = "font-family:'Syne',sans-serif; font-weight:800;
@@ -1922,22 +1924,22 @@ ui <- navbarPage(
                # ── Findings ──────────────────────────────────────────────
                div(
                  style = "background:#ffffff; padding:44px 40px;",
-                 div(style = "font-size:0.93rem; letter-spacing:0.2em; text-transform:uppercase;
+                 div(style = "font-size:1.02rem; letter-spacing:0.2em; text-transform:uppercase;
                               color:#3b82f6; margin-bottom:14px;", "Key Findings"),
                  div(
-                   style = "font-family:'Syne',sans-serif; font-weight:700; font-size:1.1rem;
+                   style = "font-family:'Syne',sans-serif; font-weight:700; font-size:1.02rem;
                             color:#0f172a; margin-bottom:18px; line-height:1.3;",
                    "Institutional-Level Factors Drive Authoritarianism"
                  ),
                  tags$p(
-                   style = "font-size:0.96rem; line-height:1.85; color:#6b7280; margin-bottom:12px;",
+                   style = "font-size:1.05rem; line-height:1.85; color:#6b7280; margin-bottom:12px;",
                    "Given its \"top-down\" process, we found institutional-level factors to be more
                     significant predictors of authoritarianism. Institutional-level predictors
                     ", tags$em("precede"), " authoritarian governments. Individual-level predictors
                     ", tags$em("proceed"), " authoritarian governments."
                  ),
                  tags$p(
-                   style = "font-size:0.96rem; line-height:1.85; color:#6b7280; margin-bottom:0;",
+                   style = "font-size:1.05rem; line-height:1.85; color:#6b7280; margin-bottom:0;",
                    "At the moment Canada is not at risk of becoming authoritarian. Strong democratic
                     guardrails such as party strength protect Canada's democratic institutions from
                     the significant predictors we identified."
@@ -1947,10 +1949,10 @@ ui <- navbarPage(
                # ── Limitations ───────────────────────────────────────────
                div(
                  style = "background:#ffffff; padding:44px 40px;",
-                 div(style = "font-size:0.93rem; letter-spacing:0.2em; text-transform:uppercase;
+                 div(style = "font-size:1.02rem; letter-spacing:0.2em; text-transform:uppercase;
                               color:#c0392b; margin-bottom:14px;", "Limitations"),
                  div(
-                   style = "font-family:'Syne',sans-serif; font-weight:700; font-size:1.1rem;
+                   style = "font-family:'Syne',sans-serif; font-weight:700; font-size:1.02rem;
                             color:#0f172a; margin-bottom:20px; line-height:1.3;",
                    "What Our Analysis Cannot Fully Capture"
                  ),
@@ -1963,13 +1965,13 @@ ui <- navbarPage(
                      div(style = "width:4px; min-width:4px; height:100%; background:#c0392b;
                                   border-radius:2px; margin-top:3px; align-self:stretch;"),
                      div(
-                       style = "font-family:'Syne',sans-serif; font-weight:700; font-size:1.02rem;
+                       style = "font-family:'Syne',sans-serif; font-weight:700; font-size:1.05rem;
                                 color:#0f172a; line-height:1.4;",
                        "Authoritarianism is Multidimensional"
                      )
                    ),
                    tags$p(
-                     style = "font-size:0.93rem; line-height:1.8; color:#6b7280; padding-left:16px;",
+                     style = "font-size:1.02rem; line-height:1.8; color:#6b7280; padding-left:16px;",
                      "Our indices incorporate both the CTM data and WVS data. However, these questions
                       cannot fully encapsulate \"authoritarianism\" because there are so many aspects and
                       definitions — we had to curate specific questions that relate to the aspects of
@@ -1984,13 +1986,13 @@ ui <- navbarPage(
                      div(style = "width:4px; min-width:4px; background:#c0392b;
                                   border-radius:2px; margin-top:3px; align-self:stretch;"),
                      div(
-                       style = "font-family:'Syne',sans-serif; font-weight:700; font-size:1.02rem;
+                       style = "font-family:'Syne',sans-serif; font-weight:700; font-size:1.05rem;
                                 color:#0f172a; line-height:1.4;",
                        "Impossible to Determine Which Factors Cause Authoritarianism (Causality)"
                      )
                    ),
                    tags$p(
-                     style = "font-size:0.93rem; line-height:1.8; color:#6b7280; padding-left:16px;",
+                     style = "font-size:1.02rem; line-height:1.8; color:#6b7280; padding-left:16px;",
                      "There are too many overlapping variables influencing authoritarianism all over
                       the world at any given time. We cannot control for certain factors because it is
                       impossible to untangle any of these factors from the variables we are analysing."
@@ -2004,14 +2006,14 @@ ui <- navbarPage(
                style = "padding:28px 10%; display:flex; justify-content:space-between;
                         align-items:center; flex-wrap:wrap; gap:12px;",
                div(
-                 style = "font-size:0.96rem; color:#9ca3af; letter-spacing:0.06em; line-height:1.7;",
+                 style = "font-size:1.05rem; color:#9ca3af; letter-spacing:0.06em; line-height:1.7;",
                  "V-Dem: Coppedge et al. (2025). V-Dem Dataset v16.",
                  tags$br(),
                  "WVS: World Values Survey Time Series 1981–2022.",
                  tags$br(),
                  "CTM Data: Innovative Research Group. December 2025."
                ),
-               div(style = "font-size:0.96rem; color:#9ca3af; letter-spacing:0.06em;",
+               div(style = "font-size:1.05rem; color:#9ca3af; letter-spacing:0.06em;",
                    "Built with R Shiny & Leaflet")
              )
            )
@@ -2281,14 +2283,14 @@ server <- function(input, output, session) {
     validate(need(nrow(d) > 0, "No data for the selected filters."))
     
     p <- ggplot(d, aes(x = year, y = y_val)) +
-      theme_minimal(base_size = 13) +
+      theme_minimal(base_size = 14) +
       theme(
         text             = element_text(family = "sans", color = "#0f172a"),
         plot.background  = element_rect(fill = "#ffffff", color = NA),
         panel.background = element_rect(fill = "#ffffff", color = NA),
         panel.grid.major = element_line(color = "#d0dae8", linewidth = .5),
         panel.grid.minor = element_line(color = "#e8eef8", linewidth = .3),
-        axis.text        = element_text(color = "#6b7280", size = 11),
+        axis.text        = element_text(color = "#6b7280", size = 9),
         axis.title       = element_text(color = "#6b7280", size = 11,
                                         margin = margin(t = 8, r = 8)),
         axis.ticks       = element_blank(),
@@ -2549,9 +2551,9 @@ server <- function(input, output, session) {
         panel.background = element_rect(fill = "#ffffff", colour = NA),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_line(colour = "#e5e7eb", linewidth = 0.4),
-        axis.text        = element_text(colour = "#374151", size = 12),
-        axis.title.x     = element_text(colour = "#374151", size = 12),
-        plot.title       = element_text(face = "bold", colour = "#0f172a", size = 15),
+        axis.text        = element_text(colour = "#374151", size = 14),
+        axis.title.x     = element_text(colour = "#374151", size = 14),
+        plot.title       = element_text(face = "bold", colour = "#0f172a", size = 14),
         plot.subtitle    = element_text(colour = "#6b7280", size = 11, hjust = 0.35),
         plot.caption     = element_text(colour = "#9ca3af", size = 9),
         plot.margin      = margin(16, 28, 16, 16)
